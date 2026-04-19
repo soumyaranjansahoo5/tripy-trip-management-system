@@ -10,17 +10,25 @@
 
   <style>
     .hero { min-height: 100vh; display: grid; grid-template-columns: 1fr 1fr; }
-    .hero-left { background: #111; display: flex; flex-direction: column; justify-content: space-between; padding: 48px; }
-    .hero-right { background: #fff; display: flex; align-items: center; justify-content: center; padding: 48px; }
+    .hero-left { background: #111; display: flex; align-items: center; justify-content: center; }
+    .hero-left h1 { color: white; font-size: 40px; }
+    .hero-right { display: flex; align-items: center; justify-content: center; }
+
     .auth-box { width: 100%; max-width: 400px; }
     .auth-tabs { display: flex; border-bottom: 2px solid #eee; margin-bottom: 20px; }
     .tab { flex:1; padding:10px; cursor:pointer; border:none; background:none; }
     .tab.active { border-bottom:2px solid black; font-weight:bold; }
+
     .aform { display:none; }
     .aform.active { display:block; }
-    .btn { width:100%; padding:10px; margin-top:10px; cursor:pointer; }
+
+    input { width:100%; padding:10px; margin:8px 0; }
+
+    .btn { width:100%; padding:10px; margin-top:10px; cursor:pointer; background:#c4622d; color:white; border:none; }
+
     .msg { margin-top:10px; }
     .err { color:red; }
+    .success { color:green; }
   </style>
 </head>
 
@@ -28,7 +36,7 @@
 
 <div class="hero">
   <div class="hero-left">
-    <h1 style="color:white;">Tripy</h1>
+    <h1>Tripy</h1>
   </div>
 
   <div class="hero-right">
@@ -41,17 +49,17 @@
 
       <!-- LOGIN -->
       <div class="aform active" id="loginForm">
-        <input type="email" id="lEmail" placeholder="Email"/><br><br>
-        <input type="password" id="lPass" placeholder="Password"/><br><br>
+        <input type="email" id="lEmail" placeholder="Email"/>
+        <input type="password" id="lPass" placeholder="Password"/>
         <button class="btn" onclick="login()">Login</button>
         <div id="lMsg" class="msg"></div>
       </div>
 
       <!-- REGISTER -->
       <div class="aform" id="regForm">
-        <input type="text" id="rName" placeholder="Name"/><br><br>
-        <input type="email" id="rEmail" placeholder="Email"/><br><br>
-        <input type="password" id="rPass" placeholder="Password"/><br><br>
+        <input type="text" id="rName" placeholder="Name"/>
+        <input type="email" id="rEmail" placeholder="Email"/>
+        <input type="password" id="rPass" placeholder="Password"/>
         <button class="btn" onclick="register()">Register</button>
         <div id="rMsg" class="msg"></div>
       </div>
@@ -68,6 +76,8 @@ function val(id){ return document.getElementById(id).value.trim(); }
 
 function storeAuth(data){
   localStorage.setItem("tripy_token", data.token);
+  localStorage.setItem("tripy_name", data.name);
+  localStorage.setItem("tripy_role", data.role);
 }
 
 // ── SWITCH TAB
@@ -81,11 +91,13 @@ function switchTab(type){
 
 // ── LOGIN
 async function login(){
+  console.log("Login clicked 🚀");
+
   const msg = document.getElementById("lMsg");
-  msg.innerHTML="";
+  msg.innerHTML = "Loading...";
 
   try{
-    const res = await fetch(API+"/auth/login",{
+    const res = await fetch(API + "/auth/login",{
       method:"POST",
       headers:{ "Content-Type":"application/json" },
       body: JSON.stringify({
@@ -95,29 +107,38 @@ async function login(){
     });
 
     const data = await res.json();
+    console.log("Login response:", data);
 
     if(data.success){
       storeAuth(data.data);
-      window.location.href="/trips.html";
-    }else{
+      msg.innerHTML = "Login successful ✅";
+      msg.className = "msg success";
+
+      setTimeout(() => {
+        window.location.href = "/trips.html";
+      }, 1000);
+
+    } else {
       msg.innerHTML = data.message;
-      msg.className="msg err";
+      msg.className = "msg err";
     }
 
-  }catch(err){
-    console.error(err);
-    msg.innerHTML="Server error. Try again.";
-    msg.className="msg err";
+  } catch(err){
+    console.error("Login error:", err);
+    msg.innerHTML = "Backend not reachable ❌";
+    msg.className = "msg err";
   }
 }
 
 // ── REGISTER
 async function register(){
+  console.log("Register clicked 🚀");
+
   const msg = document.getElementById("rMsg");
-  msg.innerHTML="";
+  msg.innerHTML = "Loading...";
 
   try{
-    const res = await fetch(API+"/auth/register",{
+    const res = await fetch(API + "/auth/register",{
       method:"POST",
       headers:{ "Content-Type":"application/json" },
       body: JSON.stringify({
@@ -128,19 +149,26 @@ async function register(){
     });
 
     const data = await res.json();
+    console.log("Register response:", data);
 
     if(data.success){
       storeAuth(data.data);
-      window.location.href="/trips.html";
-    }else{
-      msg.innerHTML=data.message;
-      msg.className="msg err";
+      msg.innerHTML = "Registered successfully ✅";
+      msg.className = "msg success";
+
+      setTimeout(() => {
+        window.location.href = "/trips.html";
+      }, 1000);
+
+    } else {
+      msg.innerHTML = data.message;
+      msg.className = "msg err";
     }
 
-  }catch(err){
-    console.error(err);
-    msg.innerHTML="Server error. Try again.";
-    msg.className="msg err";
+  } catch(err){
+    console.error("Register error:", err);
+    msg.innerHTML = "Backend not reachable ❌";
+    msg.className = "msg err";
   }
 }
 </script>
