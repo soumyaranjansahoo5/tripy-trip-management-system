@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Tripy — My Bookings</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css"/>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="nav" id="navbar"></nav>
+
+<div class="page-inner">
+  <div class="pg-hdr">
+    <div><h2>My Bookings</h2><p>All your upcoming and past trips</p></div>
+    <a href="/trips.html" class="btn btn-sm">+ Book a New Trip</a>
+  </div>
+
+  <!-- FILTER TABS -->
+  <div class="page-tabs">
+    <button class="ptab active" onclick="filterStatus('all')">All</button>
+    <button class="ptab" onclick="filterStatus('CONFIRMED')">Confirmed</button>
+    <button class="ptab" onclick="filterStatus('PENDING')">Pending</button>
+    <button class="ptab" onclick="filterStatus('CANCELLED')">Cancelled</button>
+  </div>
+
+  <div id="bookingsList"><div class="loader">Loading bookings…</div></div>
+</div>
+
+<!-- PAYMENT MODAL -->
+<div class="overlay" id="payModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('payModal')">✕</button>
+    <h3>Complete Payment</h3>
+    <div class="modal-sub" id="pay-sub">Booking payment</div>
+    <div class="fld"><label>Select Payment Method</label>
+      <div class="pay-methods">
+        <div class="pay-method selected" onclick="selectPay(this,'CARD')">💳 Card</div>
+        <div class="pay-method" onclick="selectPay(this,'UPI')">📱 UPI</div>
+        <div class="pay-method" onclick="selectPay(this,'NETBANKING')">🏦 Net Banking</div>
+      </div>
+    </div>
+    <div class="fld" id="cardFields">
+      <label>Card Number (demo)</label>
+      <input type="text" id="pay-card" placeholder="1234 5678 9012 3456" maxlength="19"/>
+    </div>
+    <div class="fld" id="upiFields" style="display:none">
+      <label>UPI ID (demo)</label>
+      <input type="text" id="pay-upi" placeholder="yourname@upi"/>
+    </div>
+    <button class="btn btn-full btn-success" onclick="simulatePay()">Pay Now →</button>
+    <div class="msg" id="pay-msg"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="/js/api.js"></script>
+<script>
+  requireAuth();
+  renderNav('bookings');
+
+  let allBookings = [];
+  let currentBookingId = null;
+  let selectedPayMethod = 'CARD';
+  let currentFilter = 'all';
+
+  async function loadBookings() {
+    document.getElementById('bookingsList').innerHTML = '<div class="loader">Loading bookings…</div>';
+    try {
+      const d = await apiGet('/bookings/my');
+      allBookings = d.data || [];
+      renderBookings(allBookings);
+    } catch { document.getElementById('bookingsList').innerHTML = '<div class="loader">Failed to load.</div>'; }
+  }
+
+  function filterStatus(status) {
+    currentFilter = status;
+    document.querySelectorAll('.ptab').forEach(t => t.classList.remove('active'));
+    event.target.classList.add('active');
+    const filtered = status === 'all' ? allBookings : allBookings.filter(b => b.status === status);
+    renderBookings(filtered);
+  }
+
+  function renderBookings(bks) {
+    const el = document.getElementById('bookingsList');
+    if (!bks.length) {
+      el.innerHTML = '<div class="empty"><div class="empty-icon">🧳</div><h3>No bookings found</h3><p>Go explore some trips!</p></div>'; return;
+    }
+    el.innerHTML = bks.map(b => `
+      <div class="bk-card">
+        <div>
+          <div class="bk-title">${b.tripTitle}</div>
+          <div class="bk-meta">
+            📍 <strong>${b.source}</strong> → <strong>${b.destination}</strong><br>
+            📅 ${fmtDate(b.startDate)} to ${fmtDate(b.endDate)} · <strong>${b.durationDays} days</strong><br>
+            👥 Persons: <strong>${b.numberOfPersons}</strong> &nbsp;|&nbsp; 💰 Total: <strong>₹${fmt(b.totalCost)}</strong><br>
+            🕐 Booked on: ${new Date(b.bookingDate).toLocaleDateString('en-IN')}
+            ${b.specialRequests ? `<br>📝 ${b.specialRequests}` : ''}
+            ${b.paymentReference ? `<br>🧾 Ref: <code style="font-size:11px;background:#eee;padding:1px 6px;border-radius:3px">${b.paymentReference}</code>` : ''}
+          </div>
+          <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+            ${b.status !== 'CANCELLED' ? `<button class="btn btn-sm btn-outline" onclick="cancelBooking(${b.id})">Cancel Booking</button>` : ''}
+            ${b.status !== 'CANCELLED' && b.paymentStatus === 'UNPAID'
+              ? `<button class="btn btn-sm btn-success" onclick="openPayModal(${b.id},${b.totalCost})">Pay ₹${fmt(b.totalCost)}</button>` : ''}
+          </div>
+        </div>
+        <div class="bk-right">
+          <span class="bk-badge bk-${b.status}">${b.status}</span>
+          <span class="pay-badge pay-${b.paymentStatus}">${b.paymentStatus}</span>
+        </div>
+      </div>`).join('');
+  }
+
+  async function cancelBooking(id) {
+    if (!confirm('Cancel this booking? Seats will be restored.')) return;
+    try {
+      const d = await apiPut('/bookings/' + id + '/cancel');
+      if (d.success) { toast('✅ Booking cancelled. Seats restored.'); loadBookings(); }
+      else toast(d.message || 'Cancellation failed');
+    } catch { toast('Error cancelling booking'); }
+  }
+
+  function openPayModal(bookingId, amount) {
+    currentBookingId = bookingId;
+    document.getElementById('pay-sub').textContent = 'Amount to pay: ₹' + fmt(amount);
+    document.getElementById('pay-msg').className = 'msg';
+    document.getElementById('pay-card').value = '';
+    document.getElementById('pay-upi').value = '';
+    openModal('payModal');
+  }
+
+  function selectPay(el, method) {
+    selectedPayMethod = method;
+    document.querySelectorAll('.pay-method').forEach(m => m.classList.remove('selected'));
+    el.classList.add('selected');
+    document.getElementById('cardFields').style.display = method === 'CARD' ? 'block' : 'none';
+    document.getElementById('upiFields').style.display  = method === 'UPI'  ? 'block' : 'none';
+  }
+
+  async function simulatePay() {
+    const msgEl = document.getElementById('pay-msg'); msgEl.className = 'msg';
+    const body = { bookingId: currentBookingId, paymentMethod: selectedPayMethod, cardNumber: val('pay-card'), upiId: val('pay-upi') };
+    try {
+      const d = await apiPost('/bookings/pay', body);
+      if (d.success) { closeModal('payModal'); toast('✅ Payment successful! Ref: ' + d.data.paymentReference); loadBookings(); }
+      else { msgEl.textContent = d.message || 'Payment failed'; msgEl.className = 'msg err'; }
+    } catch { msgEl.textContent = 'Payment error'; msgEl.className = 'msg err'; }
+  }
+
+  loadBookings();
+</script>
+</body>
+</html>

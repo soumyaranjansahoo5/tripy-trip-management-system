@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Tripy — Explore Trips</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css"/>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="nav" id="navbar"></nav>
+
+<div class="page-inner">
+  <div class="pg-hdr">
+    <div><h2>Explore Trips</h2><p>Discover handpicked journeys across India</p></div>
+  </div>
+
+  <!-- SEARCH & FILTER -->
+  <div class="search-wrap">
+    <div class="search-row">
+      <input type="text" id="sSource" placeholder="🛫 From (e.g. Mumbai)"/>
+      <input type="text" id="sDest"   placeholder="🛬 To (e.g. Goa)"/>
+      <input type="date" id="sDate"/>
+      <button class="btn btn-sm" onclick="searchTrips()">Search</button>
+      <button class="btn btn-sm btn-outline" onclick="loadTrips()">All Trips</button>
+    </div>
+    <div class="filter-row">
+      <label>Filter by Price:</label>
+      <input type="number" id="fMin" placeholder="Min ₹"/>
+      <input type="number" id="fMax" placeholder="Max ₹"/>
+      <label style="margin-left:8px">Min Seats:</label>
+      <input type="number" id="fSeats" placeholder="1" value="1" style="width:80px"/>
+      <button class="btn btn-sm" onclick="filterTrips()">Apply</button>
+    </div>
+  </div>
+
+  <!-- SORT -->
+  <div class="sort-row">
+    <span class="sort-lbl">Sort by:</span>
+    <button class="sort-btn active" id="sort-id"    onclick="sortTrips('id')">Default</button>
+    <button class="sort-btn"        id="sort-price" onclick="sortTrips('price')">Price ↑</button>
+    <button class="sort-btn"        id="sort-date"  onclick="sortTrips('date')">Date</button>
+  </div>
+
+  <!-- TRIPS GRID -->
+  <div class="grid" id="tripsGrid"><div class="loader">Loading trips…</div></div>
+</div>
+
+<!-- BOOKING MODAL -->
+<div class="overlay" id="bookModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('bookModal')">✕</button>
+    <h3 id="bm-title">Book Trip</h3>
+    <div class="modal-sub" id="bm-route"></div>
+    <div class="fld"><label>Number of Persons</label>
+      <input type="number" id="bm-persons" min="1" value="1" oninput="updateCost()"/></div>
+    <div class="fld"><label>Special Requests (optional)</label>
+      <input type="text" id="bm-special" placeholder="e.g. Vegetarian meal, window seat"/></div>
+    <div class="cost-box">
+      <span>Total Cost</span><strong id="bm-cost">₹0</strong>
+    </div>
+    <button class="btn btn-full" onclick="confirmBooking()">Confirm Booking →</button>
+    <div class="msg" id="bm-msg"></div>
+  </div>
+</div>
+
+<!-- TRIP DETAIL MODAL -->
+<div class="overlay" id="detailModal">
+  <div class="modal" style="max-width:560px">
+    <button class="modal-close" onclick="closeModal('detailModal')">✕</button>
+    <div id="detailContent"></div>
+  </div>
+</div>
+
+<!-- REVIEW MODAL -->
+<div class="overlay" id="reviewModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('reviewModal')">✕</button>
+    <h3>Write a Review</h3>
+    <div class="modal-sub" id="rv-sub"></div>
+    <input type="hidden" id="rv-tripId"/>
+    <div class="fld"><label>Your Rating</label>
+      <div class="stars" id="stars">
+        <span class="star" onclick="setStar(1)">★</span>
+        <span class="star" onclick="setStar(2)">★</span>
+        <span class="star" onclick="setStar(3)">★</span>
+        <span class="star" onclick="setStar(4)">★</span>
+        <span class="star" onclick="setStar(5)">★</span>
+      </div>
+    </div>
+    <div class="fld"><label>Comment</label>
+      <textarea id="rv-comment" placeholder="Share your experience…"></textarea></div>
+    <button class="btn btn-full" onclick="submitReview()">Submit Review</button>
+    <div class="msg" id="rv-msg"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="/js/api.js"></script>
+<script>
+  requireAuth();
+  renderNav('trips');
+
+  let currentTrip = null;
+  let currentSort = 'id';
+  let selectedStar = 0;
+
+  // ── LOAD TRIPS ──
+  async function loadTrips() {
+    document.getElementById('tripsGrid').innerHTML = '<div class="loader">Loading trips…</div>';
+    try {
+      const d = await apiGet('/trips/paged?page=0&size=100&sort=' + currentSort);
+      renderTrips(d.data ? d.data.content : []);
+    } catch { document.getElementById('tripsGrid').innerHTML = '<div class="loader">Failed to load. Is backend running?</div>'; }
+  }
+
+  async function searchTrips() {
+    let url = '/trips/search?';
+    const src = val('sSource'), dst = val('sDest'), date = val('sDate');
+    if (src)  url += 'source=' + encodeURIComponent(src) + '&';
+    if (dst)  url += 'destination=' + encodeURIComponent(dst) + '&';
+    if (date) url += 'date=' + date;
+    document.getElementById('tripsGrid').innerHTML = '<div class="loader">Searching…</div>';
+    try { const d = await apiGet(url); renderTrips(d.data || []); }
+    catch { toast('Search failed'); }
+  }
+
+  async function filterTrips() {
+    const min = val('fMin'), max = val('fMax'), seats = val('fSeats') || 1;
+    let url = '/trips/filter?minSeats=' + seats;
+    if (min) url += '&minPrice=' + min;
+    if (max) url += '&maxPrice=' + max;
+    document.getElementById('tripsGrid').innerHTML = '<div class="loader">Filtering…</div>';
+    try { const d = await apiGet(url); renderTrips(d.data || []); }
+    catch { toast('Filter failed'); }
+  }
+
+  function sortTrips(s) {
+    currentSort = s;
+    document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('sort-' + s).classList.add('active');
+    loadTrips();
+  }
+
+  // ── RENDER TRIPS ──
+  function renderTrips(trips) {
+    const g = document.getElementById('tripsGrid');
+    if (!trips.length) {
+      g.innerHTML = '<div class="empty"><div class="empty-icon">🗺️</div><h3>No trips found</h3><p>Try different search criteria</p></div>'; return;
+    }
+    g.innerHTML = trips.map(t => {
+      const bg = t.imageUrl ? `url('${t.imageUrl}')` : `linear-gradient(135deg,${rndGrad()})`;
+      const stars = t.averageRating ? '★'.repeat(Math.round(t.averageRating)) + ` (${t.totalReviews})` : 'No reviews yet';
+      return `<div class="card">
+        <div class="card-img" style="background-image:${bg};background-color:#888">
+          <div class="dest-tag">${t.destination}</div>
+          <div class="status-tag st-${t.status}">${t.status}</div>
+        </div>
+        <div class="card-body">
+          <div class="card-title">${t.title}</div>
+          <div class="card-route"><span>${t.source}</span> → <span>${t.destination}</span> · ${t.durationDays} days</div>
+          <div class="card-desc">${t.description || 'A wonderful trip awaits!'}</div>
+          <div class="card-rating">${stars}</div>
+          <div class="card-meta">
+            <div>
+              <div class="card-price">₹${fmt(t.pricePerPerson)} <small>/person</small></div>
+              <div style="font-size:11px;color:#aaa">Seats: <strong style="color:var(--ink)">${t.availableSeats}</strong> left</div>
+            </div>
+            <div class="card-info">${fmtDate(t.startDate)}<br>to ${fmtDate(t.endDate)}</div>
+          </div>
+          <div class="card-actions">
+            <button class="btn btn-sm" onclick='openBookModal(${JSON.stringify(t)})'>Book Now</button>
+            <button class="btn btn-sm btn-outline" onclick='openDetail(${JSON.stringify(t)})'>Details</button>
+            <button class="btn btn-sm btn-outline" onclick='openReviewModal(${t.id},"${t.title}")'>Review</button>
+          </div>
+        </div></div>`;
+    }).join('');
+  }
+
+  // ── BOOK MODAL ──
+  function openBookModal(t) {
+    currentTrip = t;
+    document.getElementById('bm-title').textContent = t.title;
+    document.getElementById('bm-route').textContent = `${t.source} → ${t.destination} · ${fmtDate(t.startDate)} to ${fmtDate(t.endDate)}`;
+    document.getElementById('bm-persons').value = 1;
+    document.getElementById('bm-persons').max = t.availableSeats;
+    document.getElementById('bm-special').value = '';
+    document.getElementById('bm-msg').className = 'msg';
+    updateCost();
+    openModal('bookModal');
+  }
+
+  function updateCost() {
+    if (!currentTrip) return;
+    const n = parseInt(document.getElementById('bm-persons').value) || 1;
+    document.getElementById('bm-cost').textContent = '₹' + fmt(currentTrip.pricePerPerson * n);
+  }
+
+  async function confirmBooking() {
+    const msgEl = document.getElementById('bm-msg'); msgEl.className = 'msg';
+    const body = { tripId: currentTrip.id, numberOfPersons: parseInt(document.getElementById('bm-persons').value), specialRequests: val('bm-special') };
+    try {
+      const d = await apiPost('/bookings', body);
+      if (d.success) { closeModal('bookModal'); toast('🎉 Booking confirmed!'); loadTrips(); }
+      else { msgEl.textContent = d.message || 'Booking failed'; msgEl.className = 'msg err'; }
+    } catch { msgEl.textContent = 'Booking failed.'; msgEl.className = 'msg err'; }
+  }
+
+  // ── DETAIL MODAL ──
+  async function openDetail(t) {
+    let reviews = [];
+    try { const d = await apiGet('/reviews/trip/' + t.id); reviews = d.data || []; } catch {}
+    const avg = reviews.length ? (reviews.reduce((s,r) => s+r.rating, 0)/reviews.length).toFixed(1) : null;
+    document.getElementById('detailContent').innerHTML = `
+      <h3 style="font-family:'Playfair Display',serif;font-size:24px;margin-bottom:8px">${t.title}</h3>
+      <div style="font-size:13px;color:#888;margin-bottom:16px">${t.source} → ${t.destination}</div>
+      <div style="font-size:14px;line-height:1.7;margin-bottom:20px;color:#555">${t.description || ''}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;font-size:13px">
+        <div>📅 <strong>Start:</strong> ${fmtDate(t.startDate)}</div>
+        <div>📅 <strong>End:</strong> ${fmtDate(t.endDate)}</div>
+        <div>⏱ <strong>Duration:</strong> ${t.durationDays} days</div>
+        <div>💺 <strong>Seats:</strong> ${t.availableSeats}</div>
+        <div>💰 <strong>Price:</strong> ₹${fmt(t.pricePerPerson)}/person</div>
+        <div>📊 <strong>Status:</strong> ${t.status}</div>
+        ${avg ? `<div>⭐ <strong>Rating:</strong> ${avg}/5 (${reviews.length} reviews)</div>` : ''}
+      </div>
+      ${reviews.length ? `<div style="font-weight:600;margin-bottom:12px;font-size:14px">Reviews</div>
+      ${reviews.slice(0,3).map(r => `<div class="review-card"><div class="rv-name">${r.userName}</div>
+        <div class="rv-stars">${'★'.repeat(r.rating)}${'☆'.repeat(5-r.rating)}</div>
+        ${r.comment ? `<div class="rv-comment">${r.comment}</div>` : ''}</div>`).join('')}` : ''}
+      <button class="btn btn-full" style="margin-top:16px" onclick='closeModal("detailModal");openBookModal(${JSON.stringify(t)})'>Book This Trip</button>`;
+    openModal('detailModal');
+  }
+
+  // ── REVIEW MODAL ──
+  function openReviewModal(tripId, tripTitle) {
+    document.getElementById('rv-tripId').value = tripId;
+    document.getElementById('rv-sub').textContent = 'Trip: ' + tripTitle;
+    document.getElementById('rv-comment').value = '';
+    document.getElementById('rv-msg').className = 'msg';
+    selectedStar = 0;
+    document.querySelectorAll('.star').forEach(s => s.classList.remove('active'));
+    openModal('reviewModal');
+  }
+
+  function setStar(n) {
+    selectedStar = n;
+    document.querySelectorAll('.star').forEach(s => s.classList.toggle('active', parseInt(s.textContent && s.getAttribute('onclick').match(/\d/)[0]) <= n));
+    document.querySelectorAll('#stars .star').forEach((s,i) => s.classList.toggle('active', i < n));
+  }
+
+  async function submitReview() {
+    const msgEl = document.getElementById('rv-msg'); msgEl.className = 'msg';
+    if (!selectedStar) { msgEl.textContent = 'Please select a star rating'; msgEl.className = 'msg err'; return; }
+    const body = { tripId: parseInt(document.getElementById('rv-tripId').value), rating: selectedStar, comment: val('rv-comment') };
+    try {
+      const d = await apiPost('/reviews', body);
+      if (d.success) { closeModal('reviewModal'); toast('⭐ Review submitted!'); }
+      else { msgEl.textContent = d.message || 'Review failed'; msgEl.className = 'msg err'; }
+    } catch { msgEl.textContent = 'Error submitting review'; msgEl.className = 'msg err'; }
+  }
+
+  loadTrips();
+</script>
+</body>
+</html>

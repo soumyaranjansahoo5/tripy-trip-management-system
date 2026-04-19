@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Tripy — Sign In</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css"/>
+  <style>
+    .hero { min-height: 100vh; display: grid; grid-template-columns: 1fr 1fr; }
+    .hero-left { background: var(--ink); display: flex; flex-direction: column; justify-content: space-between; padding: 48px 56px; position: relative; overflow: hidden; }
+    .hero-left::before { content: ''; position: absolute; width: 500px; height: 500px; background: radial-gradient(circle, rgba(196,98,45,.25) 0%, transparent 70%); bottom: -100px; left: -100px; pointer-events: none; }
+    .logo { font-family: 'Playfair Display', serif; font-size: 28px; color: var(--cream); }
+    .logo span { color: var(--terra2); }
+    .tagline { z-index: 1; }
+    .tagline h1 { font-family: 'Playfair Display', serif; font-size: clamp(48px, 5.5vw, 84px); line-height: .95; color: var(--cream); letter-spacing: -2px; margin-bottom: 24px; }
+    .tagline h1 em { color: var(--terra2); font-style: italic; }
+    .tagline p { color: var(--mist); font-size: 15px; font-weight: 300; line-height: 1.7; max-width: 320px; }
+    .hero-stats { display: flex; gap: 32px; z-index: 1; }
+    .stat-num { font-family: 'Playfair Display', serif; font-size: 34px; color: var(--terra2); }
+    .stat-lbl { font-size: 11px; color: var(--mist); letter-spacing: 1px; text-transform: uppercase; }
+    .hero-right { background: var(--cream); display: flex; align-items: center; justify-content: center; padding: 48px 56px; }
+    .auth-box { width: 100%; max-width: 400px; }
+    .auth-tabs { display: flex; border-bottom: 2px solid var(--sand); margin-bottom: 36px; }
+    .tab { background: none; border: none; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; padding: 11px 22px 13px; cursor: pointer; color: #999; letter-spacing: .5px; text-transform: uppercase; position: relative; transition: color .2s; }
+    .tab.active { color: var(--ink); }
+    .tab.active::after { content: ''; position: absolute; bottom: -2px; left: 0; right: 0; height: 2px; background: var(--terra); }
+    .aform { display: none; } .aform.active { display: block; }
+    .form-title { font-family: 'Playfair Display', serif; font-size: 30px; margin-bottom: 6px; letter-spacing: -.5px; }
+    .form-sub { color: #888; font-size: 13px; margin-bottom: 28px; }
+    @media (max-width: 768px) { .hero { grid-template-columns: 1fr; } .hero-left { min-height: 45vh; padding: 32px 24px; } .hero-right { padding: 32px 24px; } }
+  </style>
+</head>
+<body>
+<div class="hero">
+  <div class="hero-left">
+    <div class="logo">Trip<span>y</span></div>
+    <div class="tagline">
+      <h1>Travel <em>Beyond</em> Limits</h1>
+      <p>Handpicked journeys across India. Seamless booking, unforgettable experiences.</p>
+    </div>
+    <div class="hero-stats">
+      <div><div class="stat-num">200+</div><div class="stat-lbl">Destinations</div></div>
+      <div><div class="stat-num">50k+</div><div class="stat-lbl">Travelers</div></div>
+      <div><div class="stat-num">4.9★</div><div class="stat-lbl">Rating</div></div>
+    </div>
+  </div>
+  <div class="hero-right">
+    <div class="auth-box">
+      <div class="auth-tabs">
+        <button class="tab active" onclick="switchTab('login')">Sign In</button>
+        <button class="tab" onclick="switchTab('register')">Create Account</button>
+      </div>
+      <div class="aform active" id="loginForm">
+        <div class="form-title">Welcome back</div>
+        <div class="form-sub">Sign in to your Tripy account</div>
+        <div class="fld"><label>Email</label><input type="email" id="lEmail" placeholder="you@example.com"/></div>
+        <div class="fld"><label>Password</label><input type="password" id="lPass" placeholder="••••••••"/></div>
+        <button class="btn btn-full" onclick="login()">Sign In →</button>
+        <div class="msg" id="lMsg"></div>
+      </div>
+      <div class="aform" id="regForm">
+        <div class="form-title">Join Tripy</div>
+        <div class="form-sub">Start your adventure today</div>
+        <div class="fld"><label>Full Name</label><input type="text" id="rName" placeholder="Your full name"/></div>
+        <div class="fld"><label>Email</label><input type="email" id="rEmail" placeholder="you@example.com"/></div>
+        <div class="fld"><label>Phone</label><input type="tel" id="rPhone" placeholder="+91 9999999999"/></div>
+        <div class="fld"><label>Password</label><input type="password" id="rPass" placeholder="Min. 6 characters"/></div>
+        <button class="btn btn-full" onclick="register()">Create Account →</button>
+        <div class="msg" id="rMsg"></div>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="/js/api.js"></script>
+<script>
+  if (getToken()) window.location.href = '/trips.html';
+  function switchTab(t) {
+    document.querySelectorAll('.tab').forEach((b,i) => b.classList.toggle('active',(i===0)===(t==='login')));
+    document.getElementById('loginForm').classList.toggle('active', t==='login');
+    document.getElementById('regForm').classList.toggle('active', t==='register');
+  }
+  async function login() {
+    const msgEl = document.getElementById('lMsg'); msgEl.className = 'msg';
+    try {
+      const d = await apiPost('/auth/login',{email:val('lEmail'),password:val('lPass')},false);
+      if(d.success){storeAuth(d.data);window.location.href='/trips.html';}
+      else{msgEl.textContent=d.message||'Login failed';msgEl.className='msg err';}
+    } catch{msgEl.textContent='Cannot connect. Is backend running on port 8080?';msgEl.className='msg err';}
+  }
+  async function register() {
+    const msgEl = document.getElementById('rMsg'); msgEl.className = 'msg';
+    const body = {name:val('rName'),email:val('rEmail'),phone:val('rPhone'),password:val('rPass')};
+    try {
+      const d = await apiPost('/auth/register',body,false);
+      if(d.success){storeAuth(d.data);window.location.href='/trips.html';}
+      else{msgEl.textContent=d.message||'Registration failed';msgEl.className='msg err';}
+    } catch{msgEl.textContent='Cannot connect.';msgEl.className='msg err';}
+  }
+  document.addEventListener('keydown',e=>{
+    if(e.key==='Enter'){if(document.getElementById('loginForm').classList.contains('active'))login();else register();}
+  });
+</script>
+</body>
+</html>
