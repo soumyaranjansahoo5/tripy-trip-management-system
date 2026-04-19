@@ -134,4 +134,8 @@ function toast(msg) {
 }
 
 // ── UTILITIES ────────────────────────────────────────────
+<<<<<<< HEAD
 const val = id => document.getElementById(id).value.trim();
+=======
+const val = id => document.getElementById(id).value.trim();
+>>>>>>> 3a1eeb9 (update the index html file)
