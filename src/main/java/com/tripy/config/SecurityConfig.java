@@ -25,16 +25,19 @@ public class SecurityConfig {
     @Autowired
     private UserDetailsServiceImpl userDetailsService;
 
+    // ✅ JWT Filter
     @Bean
     public JwtAuthenticationFilter jwtAuthenticationFilter() {
         return new JwtAuthenticationFilter();
     }
 
+    // ✅ Password Encoder
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
+    // ✅ Authentication Provider
     @Bean
     public DaoAuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
@@ -43,22 +46,33 @@ public class SecurityConfig {
         return authProvider;
     }
 
+    // ✅ Authentication Manager
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authConfig) throws Exception {
         return authConfig.getAuthenticationManager();
     }
 
+    // ✅ MAIN SECURITY CONFIG (FIXED)
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
         http
+            .cors() // 🔥 VERY IMPORTANT (fixes Vercel ↔ Railway issue)
+            .and()
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/**").permitAll()   // 🔥 allow everything (TEST MODE)
+                // ✅ Allow auth APIs
+                .requestMatchers("/api/auth/**").permitAll()
+
+                // ✅ Allow public APIs (optional)
+                .requestMatchers("/api/test").permitAll()
+
+                // 🔒 Protect everything else
+                .anyRequest().authenticated()
             );
 
-        // ✅ These MUST be inside method
+        // ✅ Add JWT filter
         http.authenticationProvider(authenticationProvider());
         http.addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
 
