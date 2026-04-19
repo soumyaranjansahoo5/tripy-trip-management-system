@@ -16,7 +16,7 @@ public class TripyApplication {
 
         System.out.println("========================================");
         System.out.println("  Tripy - Trip Management System");
-        System.out.println("  Running on: http://localhost:8087");
+        System.out.println("  Running on: http://localhost:8080");
         System.out.println("========================================");
     }
 }
