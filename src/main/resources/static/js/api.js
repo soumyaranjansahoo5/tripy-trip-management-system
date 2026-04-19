@@ -1,5 +1,5 @@
 // ── CONFIG ──────────────────────────────────────────────
-const API = 'http://localhost:8080/api';
+const API = 'https://tripy-trip-management-system-production.up.railway.app/api';
 
 // ── AUTH HELPERS ─────────────────────────────────────────
 function getToken()    { return localStorage.getItem('tripy_token'); }
@@ -21,7 +21,9 @@ function requireAuth() {
 }
 
 function requireAdmin() {
-    if (!getToken() || getUserRole() !== 'ADMIN') { window.location.href = '/trips.html'; }
+    if (!getToken() || getUserRole() !== 'ADMIN') {
+        window.location.href = '/trips.html';
+    }
 }
 
 function logout() {
@@ -43,18 +45,33 @@ async function apiGet(url) {
 }
 
 async function apiPost(url, body, auth = true) {
-    const h = auth ? authHeaders() : { 'Content-Type': 'application/json' };
-    const res = await fetch(API + url, { method: 'POST', headers: h, body: JSON.stringify(body) });
+    const headers = auth ? authHeaders() : { 'Content-Type': 'application/json' };
+
+    const res = await fetch(API + url, {
+        method: 'POST',
+        headers: headers,
+        body: JSON.stringify(body)
+    });
+
     return res.json();
 }
 
 async function apiPut(url, body = {}) {
-    const res = await fetch(API + url, { method: 'PUT', headers: authHeaders(), body: JSON.stringify(body) });
+    const res = await fetch(API + url, {
+        method: 'PUT',
+        headers: authHeaders(),
+        body: JSON.stringify(body)
+    });
+
     return res.json();
 }
 
 async function apiDelete(url) {
-    const res = await fetch(API + url, { method: 'DELETE', headers: authHeaders() });
+    const res = await fetch(API + url, {
+        method: 'DELETE',
+        headers: authHeaders()
+    });
+
     return res.json();
 }
 
@@ -64,6 +81,7 @@ function renderNav(activePage) {
     const name = getUserName();
     const nav = document.getElementById('navbar');
     if (!nav) return;
+
     nav.innerHTML = `
         <a class="nav-logo" href="/trips.html">Trip<span>y</span></a>
         <div class="nav-links">
@@ -82,10 +100,16 @@ function closeModal(id) { document.getElementById(id).classList.remove('show'); 
 
 document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.overlay').forEach(o =>
-        o.addEventListener('click', e => { if (e.target === o) o.classList.remove('show'); }));
+        o.addEventListener('click', e => {
+            if (e.target === o) o.classList.remove('show');
+        })
+    );
+
     document.addEventListener('keydown', e => {
-        if (e.key === 'Escape')
-            document.querySelectorAll('.overlay.show').forEach(o => o.classList.remove('show'));
+        if (e.key === 'Escape') {
+            document.querySelectorAll('.overlay.show')
+                .forEach(o => o.classList.remove('show'));
+        }
     });
 });
 
@@ -93,14 +117,26 @@ document.addEventListener('DOMContentLoaded', () => {
 function toast(msg) {
     const t = document.getElementById('toast');
     if (!t) return;
+
     t.textContent = msg;
     t.classList.add('show');
+
     setTimeout(() => t.classList.remove('show'), 3200);
 }
 
 // ── UTILITIES ────────────────────────────────────────────
 const val     = id => document.getElementById(id).value.trim();
 const fmt     = n  => Number(n).toLocaleString('en-IN');
-const fmtDate = d  => d ? new Date(d).toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' }) : '';
-const grads   = ['#c4622d,#8fa8a0','#2d6ac4,#a08fc4','#2da87a,#6ac48a','#c4a02d,#c4622d','#0e0e0e,#c4622d'];
-const rndGrad = ()  => grads[Math.floor(Math.random() * grads.length)];
+const fmtDate = d  => d ? new Date(d).toLocaleDateString('en-IN', {
+    day:'numeric', month:'short', year:'numeric'
+}) : '';
+
+const grads = [
+    '#c4622d,#8fa8a0',
+    '#2d6ac4,#a08fc4',
+    '#2da87a,#6ac48a',
+    '#c4a02d,#c4622d',
+    '#0e0e0e,#c4622d'
+];
+
+const rndGrad = () => grads[Math.floor(Math.random() * grads.length)];
