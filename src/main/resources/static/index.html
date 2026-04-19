@@ -57,9 +57,9 @@
 
       <!-- LOGIN -->
       <div class="aform active" id="loginForm">
-        <form onsubmit="event.preventDefault(); login();">
+        <form onsubmit="login(event)">
           <input type="email" id="lEmail" placeholder="Email" required/>
-          <input type="password" id="lPass" placeholder="Password" required/>
+          <input type="password" id="lPass" placeholder="Password" required autocomplete="current-password"/>
           <button type="submit" class="btn">Login</button>
         </form>
         <div id="lMsg" class="msg"></div>
@@ -67,10 +67,10 @@
 
       <!-- REGISTER -->
       <div class="aform" id="regForm">
-        <form onsubmit="event.preventDefault(); register();">
+        <form onsubmit="register(event)">
           <input type="text" id="rName" placeholder="Name" required/>
           <input type="email" id="rEmail" placeholder="Email" required/>
-          <input type="password" id="rPass" placeholder="Password" required/>
+          <input type="password" id="rPass" placeholder="Password" required autocomplete="new-password"/>
           <button type="submit" class="btn">Register</button>
         </form>
         <div id="rMsg" class="msg"></div>
@@ -102,8 +102,10 @@ function switchTab(type){
 }
 
 // LOGIN
-async function login(){
-  console.log("Login clicked 🚀");
+async function login(e){
+  e.preventDefault();
+
+  console.log("🚀 Login clicked");
 
   const msg = document.getElementById("lMsg");
   msg.innerHTML = "Loading...";
@@ -118,8 +120,10 @@ async function login(){
       })
     });
 
+    console.log("Status:", res.status);
+
     const data = await res.json();
-    console.log("Login response:", data);
+    console.log("Response:", data);
 
     if(data.success){
       storeAuth(data.data);
@@ -130,7 +134,7 @@ async function login(){
         window.location.href = "/trips.html";
       }, 1000);
     } else {
-      msg.innerHTML = data.message;
+      msg.innerHTML = data.message || "Invalid credentials";
       msg.className = "msg err";
     }
 
@@ -142,8 +146,10 @@ async function login(){
 }
 
 // REGISTER
-async function register(){
-  console.log("Register clicked 🚀");
+async function register(e){
+  e.preventDefault();
+
+  console.log("🚀 Register clicked");
 
   const msg = document.getElementById("rMsg");
   msg.innerHTML = "Loading...";
@@ -159,8 +165,10 @@ async function register(){
       })
     });
 
+    console.log("Status:", res.status);
+
     const data = await res.json();
-    console.log("Register response:", data);
+    console.log("Response:", data);
 
     if(data.success){
       storeAuth(data.data);
@@ -171,7 +179,7 @@ async function register(){
         window.location.href = "/trips.html";
       }, 1000);
     } else {
-      msg.innerHTML = data.message;
+      msg.innerHTML = data.message || "Registration failed";
       msg.className = "msg err";
     }
 
