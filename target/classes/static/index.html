@@ -5,13 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Tripy — Sign In</title>
 
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display&family=DM+Sans&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/style.css"/>
 
   <style>
     .hero { min-height: 100vh; display: grid; grid-template-columns: 1fr 1fr; }
     .hero-left { background: #111; display: flex; align-items: center; justify-content: center; }
-    .hero-left h1 { color: white; font-size: 40px; }
+    .hero-left h1 { color: white; }
     .hero-right { display: flex; align-items: center; justify-content: center; }
 
     .auth-box { width: 100%; max-width: 400px; }
@@ -24,7 +24,15 @@
 
     input { width:100%; padding:10px; margin:8px 0; }
 
-    .btn { width:100%; padding:10px; margin-top:10px; cursor:pointer; background:#c4622d; color:white; border:none; }
+    .btn {
+      width:100%;
+      padding:10px;
+      margin-top:10px;
+      cursor:pointer;
+      background:#c4622d;
+      color:white;
+      border:none;
+    }
 
     .msg { margin-top:10px; }
     .err { color:red; }
@@ -49,18 +57,22 @@
 
       <!-- LOGIN -->
       <div class="aform active" id="loginForm">
-        <input type="email" id="lEmail" placeholder="Email"/>
-        <input type="password" id="lPass" placeholder="Password"/>
-        <button class="btn" onclick="login()">Login</button>
+        <form onsubmit="event.preventDefault(); login();">
+          <input type="email" id="lEmail" placeholder="Email" required/>
+          <input type="password" id="lPass" placeholder="Password" required/>
+          <button type="submit" class="btn">Login</button>
+        </form>
         <div id="lMsg" class="msg"></div>
       </div>
 
       <!-- REGISTER -->
       <div class="aform" id="regForm">
-        <input type="text" id="rName" placeholder="Name"/>
-        <input type="email" id="rEmail" placeholder="Email"/>
-        <input type="password" id="rPass" placeholder="Password"/>
-        <button class="btn" onclick="register()">Register</button>
+        <form onsubmit="event.preventDefault(); register();">
+          <input type="text" id="rName" placeholder="Name" required/>
+          <input type="email" id="rEmail" placeholder="Email" required/>
+          <input type="password" id="rPass" placeholder="Password" required/>
+          <button type="submit" class="btn">Register</button>
+        </form>
         <div id="rMsg" class="msg"></div>
       </div>
 
@@ -71,7 +83,7 @@
 <script>
 const API = "https://tripy-trip-management-system-production.up.railway.app/api";
 
-// ── HELPERS
+// HELPERS
 function val(id){ return document.getElementById(id).value.trim(); }
 
 function storeAuth(data){
@@ -80,7 +92,7 @@ function storeAuth(data){
   localStorage.setItem("tripy_role", data.role);
 }
 
-// ── SWITCH TAB
+// SWITCH TAB
 function switchTab(type){
   document.getElementById("loginForm").classList.toggle("active", type==="login");
   document.getElementById("regForm").classList.toggle("active", type==="register");
@@ -89,7 +101,7 @@ function switchTab(type){
   document.querySelectorAll(".tab")[1].classList.toggle("active", type==="register");
 }
 
-// ── LOGIN
+// LOGIN
 async function login(){
   console.log("Login clicked 🚀");
 
@@ -117,20 +129,19 @@ async function login(){
       setTimeout(() => {
         window.location.href = "/trips.html";
       }, 1000);
-
     } else {
       msg.innerHTML = data.message;
       msg.className = "msg err";
     }
 
   } catch(err){
-    console.error("Login error:", err);
+    console.error(err);
     msg.innerHTML = "Backend not reachable ❌";
     msg.className = "msg err";
   }
 }
 
-// ── REGISTER
+// REGISTER
 async function register(){
   console.log("Register clicked 🚀");
 
@@ -159,14 +170,13 @@ async function register(){
       setTimeout(() => {
         window.location.href = "/trips.html";
       }, 1000);
-
     } else {
       msg.innerHTML = data.message;
       msg.className = "msg err";
     }
 
   } catch(err){
-    console.error("Register error:", err);
+    console.error(err);
     msg.innerHTML = "Backend not reachable ❌";
     msg.className = "msg err";
   }
