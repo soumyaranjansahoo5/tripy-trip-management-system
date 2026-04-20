@@ -1,195 +1,829 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
+  <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Tripy — Sign In</title>
-
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display&family=DM+Sans&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/style.css"/>
-
+  <title>Tripy — Travel Beyond Limits</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
   <style>
-    .hero { min-height: 100vh; display: grid; grid-template-columns: 1fr 1fr; }
-    .hero-left { background: #111; display: flex; align-items: center; justify-content: center; }
-    .hero-left h1 { color: white; }
-    .hero-right { display: flex; align-items: center; justify-content: center; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-    .auth-box { width: 100%; max-width: 400px; }
-    .auth-tabs { display: flex; border-bottom: 2px solid #eee; margin-bottom: 20px; }
-    .tab { flex:1; padding:10px; cursor:pointer; border:none; background:none; }
-    .tab.active { border-bottom:2px solid black; font-weight:bold; }
-
-    .aform { display:none; }
-    .aform.active { display:block; }
-
-    input { width:100%; padding:10px; margin:8px 0; }
-
-    .btn {
-      width:100%;
-      padding:10px;
-      margin-top:10px;
-      cursor:pointer;
-      background:#c4622d;
-      color:white;
-      border:none;
+    :root {
+      --ink:    #0e0e0e;
+      --cream:  #f5f0e8;
+      --sand:   #e8dfc8;
+      --terra:  #c4622d;
+      --terra2: #e07843;
+      --mist:   #8fa8a0;
+      --white:  #ffffff;
+      --radius: 2px;
     }
 
-    .msg { margin-top:10px; }
-    .err { color:red; }
-    .success { color:green; }
+    html, body { height: 100%; font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(--ink); overflow-x: hidden; }
+
+    /* ── HERO ── */
+    .hero {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      position: relative;
+    }
+
+    .hero-left {
+      background: var(--ink);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 48px 56px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-left::before {
+      content: '';
+      position: absolute;
+      width: 500px; height: 500px;
+      background: radial-gradient(circle, rgba(196,98,45,0.25) 0%, transparent 70%);
+      bottom: -100px; left: -100px;
+      pointer-events: none;
+    }
+
+    .logo {
+      font-family: 'Playfair Display', serif;
+      font-size: 28px;
+      color: var(--cream);
+      letter-spacing: -0.5px;
+    }
+    .logo span { color: var(--terra2); }
+
+    .hero-tagline {
+      z-index: 1;
+    }
+    .hero-tagline h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(52px, 6vw, 88px);
+      line-height: 0.95;
+      color: var(--cream);
+      letter-spacing: -2px;
+      margin-bottom: 28px;
+    }
+    .hero-tagline h1 em { color: var(--terra2); font-style: italic; }
+    .hero-tagline p {
+      color: var(--mist);
+      font-size: 16px;
+      font-weight: 300;
+      line-height: 1.7;
+      max-width: 340px;
+    }
+
+    .hero-bottom {
+      display: flex;
+      gap: 32px;
+      z-index: 1;
+    }
+    .stat { }
+    .stat-num { font-family: 'Playfair Display', serif; font-size: 36px; color: var(--terra2); }
+    .stat-label { font-size: 12px; color: var(--mist); letter-spacing: 1px; text-transform: uppercase; }
+
+    /* ── RIGHT PANEL (AUTH) ── */
+    .hero-right {
+      background: var(--cream);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 48px 56px;
+    }
+
+    .auth-box {
+      width: 100%;
+      max-width: 400px;
+    }
+
+    .auth-tabs {
+      display: flex;
+      gap: 0;
+      margin-bottom: 40px;
+      border-bottom: 2px solid var(--sand);
+    }
+    .tab-btn {
+      background: none;
+      border: none;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      font-weight: 500;
+      padding: 12px 24px 14px;
+      cursor: pointer;
+      color: #999;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      position: relative;
+      transition: color 0.2s;
+    }
+    .tab-btn.active {
+      color: var(--ink);
+    }
+    .tab-btn.active::after {
+      content: '';
+      position: absolute;
+      bottom: -2px; left: 0; right: 0;
+      height: 2px;
+      background: var(--terra);
+    }
+
+    .auth-form { display: none; }
+    .auth-form.active { display: block; }
+
+    .form-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 32px;
+      margin-bottom: 8px;
+      letter-spacing: -0.5px;
+    }
+    .form-sub { color: #888; font-size: 14px; margin-bottom: 32px; }
+
+    .field { margin-bottom: 20px; }
+    .field label {
+      display: block;
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: #888;
+      margin-bottom: 8px;
+    }
+    .field input {
+      width: 100%;
+      background: var(--white);
+      border: 1.5px solid var(--sand);
+      border-radius: var(--radius);
+      padding: 13px 16px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 15px;
+      color: var(--ink);
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .field input:focus { border-color: var(--terra); }
+
+    .btn-primary {
+      width: 100%;
+      background: var(--terra);
+      color: var(--white);
+      border: none;
+      border-radius: var(--radius);
+      padding: 15px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 15px;
+      font-weight: 500;
+      cursor: pointer;
+      letter-spacing: 0.5px;
+      transition: background 0.2s, transform 0.1s;
+      margin-top: 8px;
+    }
+    .btn-primary:hover { background: var(--terra2); }
+    .btn-primary:active { transform: scale(0.98); }
+
+    .msg { margin-top: 16px; font-size: 14px; padding: 12px 16px; border-radius: var(--radius); display: none; }
+    .msg.error { background: #fde8e0; color: #b94a20; display: block; }
+    .msg.success { background: #e0f5ee; color: #1e7a52; display: block; }
+
+    /* ── NAVBAR (shown after login) ── */
+    .navbar {
+      display: none;
+      position: sticky; top: 0; z-index: 100;
+      background: var(--ink);
+      padding: 0 48px;
+      height: 64px;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .navbar.show { display: flex; }
+    .nav-logo { font-family: 'Playfair Display', serif; font-size: 22px; color: var(--cream); }
+    .nav-logo span { color: var(--terra2); }
+    .nav-links { display: flex; gap: 8px; }
+    .nav-link {
+      background: none; border: none;
+      color: var(--mist); font-family: 'DM Sans', sans-serif;
+      font-size: 14px; padding: 8px 16px; cursor: pointer;
+      border-radius: var(--radius); transition: color 0.2s, background 0.2s;
+    }
+    .nav-link:hover, .nav-link.active { color: var(--cream); background: rgba(255,255,255,0.08); }
+    .nav-link.logout { color: var(--terra2); }
+
+    /* ── PAGES ── */
+    .page { display: none; padding: 48px; min-height: calc(100vh - 64px); }
+    .page.active { display: block; }
+
+    .page-header { margin-bottom: 40px; }
+    .page-header h2 { font-family: 'Playfair Display', serif; font-size: 40px; letter-spacing: -1px; }
+    .page-header p { color: #888; margin-top: 6px; font-size: 15px; }
+
+    /* ── SEARCH BAR ── */
+    .search-bar {
+      display: flex;
+      gap: 12px;
+      background: var(--white);
+      border: 1.5px solid var(--sand);
+      border-radius: var(--radius);
+      padding: 16px 20px;
+      margin-bottom: 36px;
+      flex-wrap: wrap;
+    }
+    .search-bar input, .search-bar select {
+      flex: 1;
+      min-width: 140px;
+      border: none;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      color: var(--ink);
+      outline: none;
+      background: transparent;
+    }
+    .search-bar button {
+      background: var(--terra);
+      color: white;
+      border: none;
+      border-radius: var(--radius);
+      padding: 10px 24px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .search-bar button:hover { background: var(--terra2); }
+
+    /* ── TRIP CARDS ── */
+    .trips-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 24px;
+    }
+
+    .trip-card {
+      background: var(--white);
+      border-radius: var(--radius);
+      overflow: hidden;
+      border: 1.5px solid var(--sand);
+      transition: transform 0.2s, box-shadow 0.2s;
+      cursor: pointer;
+    }
+    .trip-card:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(0,0,0,0.1); }
+
+    .trip-card-img {
+      height: 180px;
+      background: linear-gradient(135deg, var(--terra) 0%, var(--mist) 100%);
+      display: flex;
+      align-items: flex-end;
+      padding: 16px;
+      position: relative;
+    }
+    .trip-card-img .dest-badge {
+      background: rgba(14,14,14,0.75);
+      color: var(--cream);
+      font-size: 11px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      padding: 4px 10px;
+      border-radius: var(--radius);
+    }
+    .trip-card-status {
+      position: absolute; top: 14px; right: 14px;
+      font-size: 10px; font-weight: 500; letter-spacing: 1px;
+      text-transform: uppercase; padding: 3px 10px;
+      border-radius: 20px;
+      background: #e0f5ee; color: #1e7a52;
+    }
+
+    .trip-card-body { padding: 20px; }
+    .trip-card-body h3 { font-family: 'Playfair Display', serif; font-size: 20px; margin-bottom: 6px; }
+    .trip-route { font-size: 13px; color: #888; margin-bottom: 14px; }
+    .trip-route span { color: var(--terra); font-weight: 500; }
+
+    .trip-meta {
+      display: flex; justify-content: space-between; align-items: center;
+      padding-top: 14px; border-top: 1px solid var(--sand);
+    }
+    .trip-price { font-family: 'Playfair Display', serif; font-size: 22px; color: var(--terra); }
+    .trip-price span { font-family: 'DM Sans', sans-serif; font-size: 12px; color: #999; }
+    .trip-seats { font-size: 12px; color: #888; }
+    .trip-seats strong { color: var(--ink); }
+
+    .btn-book {
+      width: 100%; margin-top: 16px;
+      background: var(--ink); color: var(--cream);
+      border: none; border-radius: var(--radius);
+      padding: 12px; font-family: 'DM Sans', sans-serif;
+      font-size: 14px; font-weight: 500; cursor: pointer;
+      letter-spacing: 0.5px; transition: background 0.2s;
+    }
+    .btn-book:hover { background: var(--terra); }
+
+    /* ── BOOKING MODAL ── */
+    .modal-overlay {
+      display: none; position: fixed;
+      inset: 0; background: rgba(14,14,14,0.6);
+      z-index: 200; align-items: center; justify-content: center;
+    }
+    .modal-overlay.show { display: flex; }
+    .modal {
+      background: var(--cream);
+      border-radius: var(--radius);
+      padding: 40px;
+      width: 100%; max-width: 480px;
+      position: relative;
+      animation: slideUp 0.25s ease;
+    }
+    @keyframes slideUp { from { transform: translateY(24px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    .modal-close {
+      position: absolute; top: 16px; right: 20px;
+      background: none; border: none; font-size: 22px;
+      cursor: pointer; color: #999; line-height: 1;
+    }
+    .modal h3 { font-family: 'Playfair Display', serif; font-size: 26px; margin-bottom: 6px; }
+    .modal-sub { color: #888; font-size: 14px; margin-bottom: 28px; }
+    .cost-preview {
+      background: var(--sand); border-radius: var(--radius);
+      padding: 16px; margin: 20px 0;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .cost-preview span { font-size: 13px; color: #888; }
+    .cost-preview strong { font-family: 'Playfair Display', serif; font-size: 26px; color: var(--terra); }
+
+    /* ── BOOKINGS PAGE ── */
+    .bookings-list { display: flex; flex-direction: column; gap: 16px; }
+    .booking-card {
+      background: var(--white); border: 1.5px solid var(--sand);
+      border-radius: var(--radius); padding: 24px;
+      display: grid; grid-template-columns: 1fr auto;
+      gap: 16px; align-items: center;
+    }
+    .booking-card h4 { font-family: 'Playfair Display', serif; font-size: 20px; margin-bottom: 4px; }
+    .booking-meta { font-size: 13px; color: #888; line-height: 1.8; }
+    .booking-meta strong { color: var(--ink); }
+    .status-badge {
+      font-size: 11px; font-weight: 500; letter-spacing: 1px;
+      text-transform: uppercase; padding: 5px 14px;
+      border-radius: 20px; white-space: nowrap;
+    }
+    .status-CONFIRMED { background: #e0f5ee; color: #1e7a52; }
+    .status-PENDING   { background: #fff8e0; color: #9a7a00; }
+    .status-CANCELLED { background: #fde8e0; color: #b94a20; }
+
+    .btn-cancel {
+      background: none; border: 1.5px solid #ddd;
+      border-radius: var(--radius); padding: 8px 18px;
+      font-family: 'DM Sans', sans-serif; font-size: 13px;
+      cursor: pointer; color: #888; transition: all 0.2s;
+      margin-top: 10px;
+    }
+    .btn-cancel:hover { border-color: var(--terra); color: var(--terra); }
+
+    /* ── EMPTY STATE ── */
+    .empty {
+      text-align: center; padding: 80px 20px; color: #aaa;
+    }
+    .empty-icon { font-size: 48px; margin-bottom: 16px; }
+    .empty h3 { font-family: 'Playfair Display', serif; font-size: 24px; color: #ccc; margin-bottom: 8px; }
+
+    /* ── TOAST ── */
+    .toast {
+      position: fixed; bottom: 32px; right: 32px;
+      background: var(--ink); color: var(--cream);
+      padding: 14px 24px; border-radius: var(--radius);
+      font-size: 14px; z-index: 999;
+      transform: translateY(80px); opacity: 0;
+      transition: all 0.3s ease;
+      border-left: 4px solid var(--terra);
+    }
+    .toast.show { transform: translateY(0); opacity: 1; }
+
+    /* ── LOADER ── */
+    .loader { text-align: center; padding: 60px; color: #bbb; font-size: 14px; }
+
+    @media (max-width: 768px) {
+      .hero { grid-template-columns: 1fr; }
+      .hero-left { min-height: 50vh; padding: 36px 28px; }
+      .hero-right { padding: 36px 28px; }
+      .page { padding: 24px; }
+      .navbar { padding: 0 24px; }
+    }
   </style>
 </head>
-
 <body>
 
-<div class="hero">
+<!-- ── NAVBAR ── -->
+<nav class="navbar" id="navbar">
+  <div class="nav-logo">Trip<span>y</span></div>
+  <div class="nav-links">
+    <button class="nav-link active" onclick="showPage('trips')">Explore Trips</button>
+    <button class="nav-link" onclick="showPage('bookings')">My Bookings</button>
+    <button class="nav-link logout" onclick="logout()">Sign Out</button>
+  </div>
+</nav>
+
+<!-- ── HERO / AUTH ── -->
+<div class="hero" id="heroSection">
   <div class="hero-left">
-    <h1>Tripy</h1>
+    <div class="logo">Trip<span>y</span></div>
+    <div class="hero-tagline">
+      <h1>Travel <em>Beyond</em> Limits</h1>
+      <p>Handpicked journeys across India. Seamless booking, unforgettable experiences.</p>
+    </div>
+    <div class="hero-bottom">
+      <div class="stat"><div class="stat-num">200+</div><div class="stat-label">Destinations</div></div>
+      <div class="stat"><div class="stat-num">50k+</div><div class="stat-label">Happy Travelers</div></div>
+      <div class="stat"><div class="stat-num">4.9★</div><div class="stat-label">Rating</div></div>
+    </div>
   </div>
 
   <div class="hero-right">
     <div class="auth-box">
-
       <div class="auth-tabs">
-        <button class="tab active" onclick="switchTab('login')">Sign In</button>
-        <button class="tab" onclick="switchTab('register')">Register</button>
+        <button class="tab-btn active" onclick="switchTab('login')">Sign In</button>
+        <button class="tab-btn" onclick="switchTab('register')">Create Account</button>
       </div>
 
       <!-- LOGIN -->
-      <div class="aform active" id="loginForm">
-        <form onsubmit="login(event)">
-          <input type="email" id="lEmail" placeholder="Email" required/>
-          <input type="password" id="lPass" placeholder="Password" required autocomplete="current-password"/>
-          <button type="submit" class="btn">Login</button>
-        </form>
-        <div id="lMsg" class="msg"></div>
+      <div class="auth-form active" id="loginForm">
+        <div class="form-title">Welcome back</div>
+        <div class="form-sub">Sign in to your Tripy account</div>
+        <div class="field"><label>Email</label><input type="email" id="loginEmail" placeholder="you@example.com"/></div>
+        <div class="field"><label>Password</label><input type="password" id="loginPassword" placeholder="••••••••"/></div>
+        <button class="btn-primary" onclick="login()">Sign In →</button>
+        <div class="msg" id="loginMsg"></div>
       </div>
 
       <!-- REGISTER -->
-      <div class="aform" id="regForm">
-        <form onsubmit="register(event)">
-          <input type="text" id="rName" placeholder="Name" required/>
-          <input type="email" id="rEmail" placeholder="Email" required/>
-          <input type="password" id="rPass" placeholder="Password" required autocomplete="new-password"/>
-          <button type="submit" class="btn">Register</button>
-        </form>
-        <div id="rMsg" class="msg"></div>
+      <div class="auth-form" id="registerForm">
+        <div class="form-title">Join Tripy</div>
+        <div class="form-sub">Create your free account</div>
+        <div class="field"><label>Full Name</label><input type="text" id="regName" placeholder="Soumyaranjan Sahoo"/></div>
+        <div class="field"><label>Email</label><input type="email" id="regEmail" placeholder="you@example.com"/></div>
+        <div class="field"><label>Phone</label><input type="tel" id="regPhone" placeholder="+91 9999999999"/></div>
+        <div class="field"><label>Password</label><input type="password" id="regPassword" placeholder="Min. 6 characters"/></div>
+        <button class="btn-primary" onclick="register()">Create Account →</button>
+        <div class="msg" id="registerMsg"></div>
       </div>
-
     </div>
   </div>
 </div>
 
+<!-- ── TRIPS PAGE ── -->
+<div class="page" id="tripsPage">
+  <div class="page-header">
+    <h2>Explore Trips</h2>
+    <p>Discover handpicked journeys across India</p>
+  </div>
+  <div class="search-bar">
+    <input type="text" id="searchSource" placeholder="🛫  From (e.g. Mumbai)"/>
+    <input type="text" id="searchDest" placeholder="🛬  To (e.g. Goa)"/>
+    <input type="date" id="searchDate"/>
+    <button onclick="searchTrips()">Search</button>
+    <button onclick="loadTrips()" style="background:transparent;color:#888;border:1.5px solid #ddd;">All Trips</button>
+  </div>
+  <div class="trips-grid" id="tripsGrid"><div class="loader">Loading trips…</div></div>
+</div>
+
+<!-- ── BOOKINGS PAGE ── -->
+<div class="page" id="bookingsPage">
+  <div class="page-header">
+    <h2>My Bookings</h2>
+    <p>All your upcoming and past trips</p>
+  </div>
+  <div class="bookings-list" id="bookingsList"><div class="loader">Loading your bookings…</div></div>
+</div>
+
+<!-- ── BOOKING MODAL ── -->
+<div class="modal-overlay" id="bookingModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <h3 id="modalTripTitle">Trip Title</h3>
+    <div class="modal-sub" id="modalTripRoute">Source → Destination</div>
+    <div class="field">
+      <label>Number of Persons</label>
+      <input type="number" id="numPersons" min="1" value="1" oninput="updateCost()"/>
+    </div>
+    <div class="field">
+      <label>Special Requests (optional)</label>
+      <input type="text" id="specialReq" placeholder="e.g. Window seat, Vegetarian meal"/>
+    </div>
+    <div class="cost-preview">
+      <span>Total Cost</span>
+      <strong id="totalCost">₹0</strong>
+    </div>
+    <button class="btn-primary" onclick="confirmBooking()">Confirm Booking →</button>
+    <div class="msg" id="bookingMsg"></div>
+  </div>
+</div>
+
+<!-- ── TOAST ── -->
+<div class="toast" id="toast"></div>
+
 <script>
-const API = "https://tripy-trip-management-system-production.up.railway.app/api";
+  const API = 'https://tripy-trip-management-system-production.up.railway.app/api';;
+  let token = localStorage.getItem('tripy_token');
+  let currentTrip = null;
 
-// HELPERS
-function val(id){ return document.getElementById(id).value.trim(); }
+  // ── INIT ──
+  window.onload = () => {
+    if (token) showApp();
+  };
 
-function storeAuth(data){
-  localStorage.setItem("tripy_token", data.token);
-  localStorage.setItem("tripy_name", data.name);
-  localStorage.setItem("tripy_role", data.role);
-}
-
-// SWITCH TAB
-function switchTab(type){
-  document.getElementById("loginForm").classList.toggle("active", type==="login");
-  document.getElementById("regForm").classList.toggle("active", type==="register");
-
-  document.querySelectorAll(".tab")[0].classList.toggle("active", type==="login");
-  document.querySelectorAll(".tab")[1].classList.toggle("active", type==="register");
-}
-
-// LOGIN
-async function login(e){
-  e.preventDefault();
-
-  console.log("🚀 Login clicked");
-
-  const msg = document.getElementById("lMsg");
-  msg.innerHTML = "Loading...";
-
-  try{
-    const res = await fetch(API + "/auth/login",{
-      method:"POST",
-      headers:{ "Content-Type":"application/json" },
-      body: JSON.stringify({
-        email: val("lEmail"),
-        password: val("lPass")
-      })
-    });
-
-    console.log("Status:", res.status);
-
-    const data = await res.json();
-    console.log("Response:", data);
-
-    if(data.success){
-      storeAuth(data.data);
-      msg.innerHTML = "Login successful ✅";
-      msg.className = "msg success";
-
-      setTimeout(() => {
-        window.location.href = "/trips.html";
-      }, 1000);
-    } else {
-      msg.innerHTML = data.message || "Invalid credentials";
-      msg.className = "msg err";
-    }
-
-  } catch(err){
-    console.error(err);
-    msg.innerHTML = "Backend not reachable ❌";
-    msg.className = "msg err";
+  // ── AUTH TABS ──
+  function switchTab(tab) {
+    document.querySelectorAll('.tab-btn').forEach((b, i) => b.classList.toggle('active', (i === 0) === (tab === 'login')));
+    document.getElementById('loginForm').classList.toggle('active', tab === 'login');
+    document.getElementById('registerForm').classList.toggle('active', tab === 'register');
   }
-}
 
-// REGISTER
-async function register(e){
-  e.preventDefault();
+  // ── REGISTER ──
+  async function register() {
+    const body = {
+      name: document.getElementById('regName').value.trim(),
+      email: document.getElementById('regEmail').value.trim(),
+      phone: document.getElementById('regPhone').value.trim(),
+      password: document.getElementById('regPassword').value
+    };
+    const msgEl = document.getElementById('registerMsg');
+    msgEl.className = 'msg';
 
-  console.log("🚀 Register clicked");
-
-  const msg = document.getElementById("rMsg");
-  msg.innerHTML = "Loading...";
-
-  try{
-    const res = await fetch(API + "/auth/register",{
-      method:"POST",
-      headers:{ "Content-Type":"application/json" },
-      body: JSON.stringify({
-        name: val("rName"),
-        email: val("rEmail"),
-        password: val("rPass")
-      })
-    });
-
-    console.log("Status:", res.status);
-
-    const data = await res.json();
-    console.log("Response:", data);
-
-    if(data.success){
-      storeAuth(data.data);
-      msg.innerHTML = "Registered successfully ✅";
-      msg.className = "msg success";
-
-      setTimeout(() => {
-        window.location.href = "/trips.html";
-      }, 1000);
-    } else {
-      msg.innerHTML = data.message || "Registration failed";
-      msg.className = "msg err";
+    try {
+      const res = await fetch(`${API}/auth/register`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      const data = await res.json();
+      if (data.success) {
+        token = data.data.token;
+        localStorage.setItem('tripy_token', token);
+        showApp();
+      } else {
+        msgEl.textContent = data.message || 'Registration failed';
+        msgEl.className = 'msg error';
+      }
+    } catch {
+      msgEl.textContent = 'Cannot connect to server. Please check backend server.';
+      msgEl.className = 'msg error';
     }
-
-  } catch(err){
-    console.error(err);
-    msg.innerHTML = "Backend not reachable ❌";
-    msg.className = "msg err";
   }
-}
+
+  // ── LOGIN ──
+  async function login() {
+    const body = {
+      email: document.getElementById('loginEmail').value.trim(),
+      password: document.getElementById('loginPassword').value
+    };
+    const msgEl = document.getElementById('loginMsg');
+    msgEl.className = 'msg';
+
+    try {
+      const res = await fetch(`${API}/auth/login`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      const data = await res.json();
+      if (data.success) {
+        token = data.data.token;
+        localStorage.setItem('tripy_token', token);
+        showApp();
+      } else {
+        msgEl.textContent = data.message || 'Invalid credentials';
+        msgEl.className = 'msg error';
+      }
+    } catch {
+      msgEl.textContent = 'Cannot connect to server. Make sure backend is running on port 8080.';
+      msgEl.className = 'msg error';
+    }
+  }
+
+  // ── LOGOUT ──
+  function logout() {
+    localStorage.removeItem('tripy_token');
+    token = null;
+    document.getElementById('heroSection').style.display = 'grid';
+    document.getElementById('navbar').classList.remove('show');
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  }
+
+  // ── SHOW APP ──
+  function showApp() {
+    document.getElementById('heroSection').style.display = 'none';
+    document.getElementById('navbar').classList.add('show');
+    showPage('trips');
+  }
+
+  // ── PAGE NAVIGATION ──
+  function showPage(name) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+    document.getElementById(name + 'Page').classList.add('active');
+    document.querySelectorAll('.nav-link')[name === 'trips' ? 0 : 1].classList.add('active');
+    if (name === 'trips') loadTrips();
+    if (name === 'bookings') loadBookings();
+  }
+
+  // ── LOAD TRIPS ──
+  async function loadTrips() {
+    const grid = document.getElementById('tripsGrid');
+    grid.innerHTML = '<div class="loader">Loading trips…</div>';
+    try {
+      const res = await fetch(`${API}/trips`, { headers: { 'Authorization': 'Bearer ' + token } });
+      const data = await res.json();
+      renderTrips(data.data || []);
+    } catch {
+      grid.innerHTML = '<div class="loader">Failed to load trips. Is the backend running?</div>';
+    }
+  }
+
+  // ── SEARCH TRIPS ──
+  async function searchTrips() {
+    const source = document.getElementById('searchSource').value.trim();
+    const dest = document.getElementById('searchDest').value.trim();
+    const date = document.getElementById('searchDate').value;
+    if (!source || !dest || !date) { showToast('Please fill source, destination and date'); return; }
+
+    const grid = document.getElementById('tripsGrid');
+    grid.innerHTML = '<div class="loader">Searching…</div>';
+    try {
+      const res = await fetch(`${API}/trips/search?source=${encodeURIComponent(source)}&destination=${encodeURIComponent(dest)}&date=${date}`);
+      const data = await res.json();
+      renderTrips(data.data || []);
+    } catch {
+      grid.innerHTML = '<div class="loader">Search failed.</div>';
+    }
+  }
+
+  // ── RENDER TRIPS ──
+  function renderTrips(trips) {
+    const grid = document.getElementById('tripsGrid');
+    if (!trips.length) {
+      grid.innerHTML = `<div class="empty"><div class="empty-icon">🗺️</div><h3>No trips found</h3><p>Try a different search</p></div>`;
+      return;
+    }
+    grid.innerHTML = trips.map(t => `
+      <div class="trip-card">
+        <div class="trip-card-img" style="background: linear-gradient(135deg, ${randomGrad()})">
+          <div class="dest-badge">${t.destination}</div>
+          <div class="trip-card-status">${t.status}</div>
+        </div>
+        <div class="trip-card-body">
+          <h3>${t.title}</h3>
+          <div class="trip-route"><span>${t.source}</span> → <span>${t.destination}</span> · ${t.durationDays} days</div>
+          <div class="trip-meta">
+            <div>
+              <div class="trip-price">₹${Number(t.pricePerPerson).toLocaleString('en-IN')} <span>/person</span></div>
+              <div class="trip-seats">Seats: <strong>${t.availableSeats}</strong> left</div>
+            </div>
+            <div style="font-size:12px;color:#aaa;text-align:right">
+              ${formatDate(t.startDate)}<br>to ${formatDate(t.endDate)}
+            </div>
+          </div>
+          <button class="btn-book" onclick="openBookingModal(${JSON.stringify(t).replace(/"/g, '&quot;')})">Book Now</button>
+        </div>
+      </div>`).join('');
+  }
+
+  // ── BOOKING MODAL ──
+  function openBookingModal(trip) {
+    currentTrip = trip;
+    document.getElementById('modalTripTitle').textContent = trip.title;
+    document.getElementById('modalTripRoute').textContent = `${trip.source} → ${trip.destination} · ${formatDate(trip.startDate)} to ${formatDate(trip.endDate)}`;
+    document.getElementById('numPersons').value = 1;
+    document.getElementById('numPersons').max = trip.availableSeats;
+    document.getElementById('specialReq').value = '';
+    document.getElementById('bookingMsg').className = 'msg';
+    updateCost();
+    document.getElementById('bookingModal').classList.add('show');
+  }
+
+  function closeModal() {
+    document.getElementById('bookingModal').classList.remove('show');
+    currentTrip = null;
+  }
+
+  function updateCost() {
+    if (!currentTrip) return;
+    const n = parseInt(document.getElementById('numPersons').value) || 1;
+    const total = (currentTrip.pricePerPerson * n).toLocaleString('en-IN');
+    document.getElementById('totalCost').textContent = '₹' + total;
+  }
+
+  // ── CONFIRM BOOKING ──
+  async function confirmBooking() {
+    const body = {
+      tripId: currentTrip.id,
+      numberOfPersons: parseInt(document.getElementById('numPersons').value),
+      specialRequests: document.getElementById('specialReq').value
+    };
+    const msgEl = document.getElementById('bookingMsg');
+    msgEl.className = 'msg';
+
+    try {
+      const res = await fetch(`${API}/bookings`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify(body)
+      });
+      const data = await res.json();
+      if (data.success) {
+        closeModal();
+        showToast('🎉 Booking confirmed!');
+        loadTrips();
+      } else {
+        msgEl.textContent = data.message || 'Booking failed';
+        msgEl.className = 'msg error';
+      }
+    } catch {
+      msgEl.textContent = 'Failed to confirm booking.';
+      msgEl.className = 'msg error';
+    }
+  }
+
+  // ── LOAD BOOKINGS ──
+  async function loadBookings() {
+    const list = document.getElementById('bookingsList');
+    list.innerHTML = '<div class="loader">Loading your bookings…</div>';
+    try {
+      const res = await fetch(`${API}/bookings/my`, { headers: { 'Authorization': 'Bearer ' + token } });
+      const data = await res.json();
+      renderBookings(data.data || []);
+    } catch {
+      list.innerHTML = '<div class="loader">Failed to load bookings.</div>';
+    }
+  }
+
+  // ── RENDER BOOKINGS ──
+  function renderBookings(bookings) {
+    const list = document.getElementById('bookingsList');
+    if (!bookings.length) {
+      list.innerHTML = `<div class="empty"><div class="empty-icon">🧳</div><h3>No bookings yet</h3><p>Go explore some trips!</p></div>`;
+      return;
+    }
+    list.innerHTML = bookings.map(b => `
+      <div class="booking-card">
+        <div>
+          <h4>${b.tripTitle}</h4>
+          <div class="booking-meta">
+            ${b.destination} · ${formatDate(b.startDate)} → ${formatDate(b.endDate)}<br>
+            Persons: <strong>${b.numberOfPersons}</strong> · Total: <strong>₹${Number(b.totalCost).toLocaleString('en-IN')}</strong><br>
+            Booked on: ${new Date(b.bookingDate).toLocaleDateString('en-IN')}
+            ${b.specialRequests ? `<br>Note: ${b.specialRequests}` : ''}
+          </div>
+          ${b.status !== 'CANCELLED' ? `<button class="btn-cancel" onclick="cancelBooking(${b.id})">Cancel Booking</button>` : ''}
+        </div>
+        <div>
+          <span class="status-badge status-${b.status}">${b.status}</span>
+        </div>
+      </div>`).join('');
+  }
+
+  // ── CANCEL BOOKING ──
+  async function cancelBooking(id) {
+    if (!confirm('Are you sure you want to cancel this booking?')) return;
+    try {
+      const res = await fetch(`${API}/bookings/${id}/cancel`, {
+        method: 'PUT', headers: { 'Authorization': 'Bearer ' + token }
+      });
+      const data = await res.json();
+      if (data.success) { showToast('Booking cancelled.'); loadBookings(); }
+      else showToast(data.message || 'Cancellation failed.');
+    } catch { showToast('Failed to cancel booking.'); }
+  }
+
+  // ── TOAST ──
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3000);
+  }
+
+  // ── HELPERS ──
+  function formatDate(d) {
+    if (!d) return '';
+    return new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+  }
+
+  const gradients = [
+    '#c4622d, #8fa8a0','#2d6ac4, #a08fc4','#2da87a, #6ac48a',
+    '#c4a02d, #c4622d','#8f2dc4, #2d6ac4','#c42d6a, #c4622d'
+  ];
+  function randomGrad() { return gradients[Math.floor(Math.random() * gradients.length)]; }
+
+  // Close modal on overlay click
+  document.getElementById('bookingModal').addEventListener('click', function(e) {
+    if (e.target === this) closeModal();
+  });
+
+  // Enter key support
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+      if (document.getElementById('loginForm').classList.contains('active')) login();
+      else if (document.getElementById('registerForm').classList.contains('active')) register();
+    }
+    if (e.key === 'Escape') closeModal();
+  });
 </script>
-
 </body>
 </html>
